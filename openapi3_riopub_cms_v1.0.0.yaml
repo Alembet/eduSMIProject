@@ -1,0 +1,1300 @@
+openapi: 3.0.1
+info:
+  title: API WebServices RIO Publication for the new CMS
+  description: |-
+    Dans les échanges mis en œuvre, le RIO est toujours serveur.
+    > Les systèmes externes, dénommés « client » dans la suite du document sont toujours à l’initiative
+    de l’échange.
+    > Le protocole est HTTPS, avec authentification mutuelle (le client doit être authentifié par certificat).
+  version: 1.0.0
+servers:
+- url: https://pubws.preproduction.rio.dnum.minint.fr/services/ServiceRioWsServer
+- url: https://sil.pubws.preproduction.rio.dnum.minint.fr/services/ServiceRioWsServer
+- url: https://pubws.rio.dnum.minint.fr/services/ServiceRioWsServer
+- url: https://sil.pubws.rio.dnum.minint.fr/services/ServiceRioWsServer
+- url: http://rio-pub.mi/services/ServiceRioWsServer
+- url: http://sil.rio-pub.mi/services/ServiceRioWsServer
+
+paths:
+
+  /identite:
+    get:
+      tags:
+      - Identites
+      summary: Informations relatives à un agent; 
+      operationId: getIdentite
+      description: |-
+        Cette fonction permet de recuperer les informations relatives à un agent (et un seul) 
+        > en fonction de ses identifiants RIO ou source (matricule SIRH).
+      parameters:
+      - name: uid
+        in: query
+        description: Identifiant RIO (conditionnel)
+        allowEmptyValue: true
+        schema:
+          maxLength: 10
+          type: string
+          format: text
+      - name: employeeNumber
+        in: query
+        description: |-
+          Identifiant RIO signifiant d'un agent pour une application SIRH source
+          > Matricule préfixé du code de l'application source:
+          >(A pour ARPEGE, D pour DIALOGUE, R pour RIO, P pour RPSI). (conditionnel)
+        allowEmptyValue: true
+        schema:
+          maxLength: 11
+          type: string
+          format: identifiant_metier
+      - name: images
+        in: query
+        description: Indicateur de fourniture de la photographie et de la signature
+          manuscrite de l'agent
+        required: true
+        schema:
+          type: boolean
+      - name: certificats
+        in: query
+        description: Indicateur de fourniture des certificats de la carte agent ministerielle si ce dernier en posséde une.
+        required: true
+        schema:
+          type: boolean
+      responses:
+        100:
+          description: Nb de résultats important - veuillez affiner vos critères
+          content: {}
+        101:
+          description: Un des paramètres doit être renseigné (Identifiant RIO ou RH)
+          content: {}
+        103:
+          description: Les paramètres doivent être renseignes (Identifiant RIO ou
+            RH)
+          content: {}
+        105:
+          description: Utilisation joker - Deux lettres au minimum
+          content: {}
+        106:
+          description: Id RIO - Paramètre invalide
+          content: {}
+        111:
+          description: Uid - Paramètre invalide
+          content: {}
+        117:
+          description: Aucune correspondance pour l'UID
+          content: {}
+        126:
+          description: Indicateur de fourniture d'image obligatoire
+          content: {}
+        127:
+          description: Indicateur de fourniture de certificat obligatoire
+          content: {}
+        200:
+          description: La recherche des informations sur l'agent s'est déroulée avec
+            succès.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentiteResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /identite/{uid}:
+    get:
+      tags:
+      - Identites
+      summary: Informations relatives à un agent à partir de son identifiant RIO
+      operationId: getIdentite
+      description: Cette fonction permet de rechercher les informations relatives
+        à un agent (et un seul) en fonction de ses identifiants RIO
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+          format: text
+      - name: employeeNumber
+        in: query
+        description: Identifiant RH dans une source du RIO (par exemple matricule
+          DIALOGUE), préfixé du code source (A pour ARPEGE, D pour DIALOGUE, R pour
+          RIO). (conditionnel)
+        allowEmptyValue: true
+        schema:
+          maxLength: 11
+          type: string
+      responses:
+        100:
+          description: Nb de résultats important - veuillez affiner vos critères
+          content: {}
+        101:
+          description: Un des paramètres doit être renseigné (Identifiant RIO ou RH)
+          content: {}
+        103:
+          description: Les paramètres doivent être renseignes (Identifiant RIO ou
+            RH)
+          content: {}
+        110:
+          description: Uid - Paramètre obligatoire
+          content: {}
+        111:
+          description: Uid - Paramètre invalide
+          content: {}
+        117:
+          description: Aucune correspondance pour l'UID
+          content: {}
+        123:
+          description: Type entité – Paramètre invalide
+          content: {}
+        128:
+          description: EmployeeNumber – Paramètre invalide
+          content: {}
+        200:
+          description: La recherche des informations sur l'agent s'est déroulée avec
+            succès.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentiteResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /services/{idService}:
+    get:
+      tags:
+      - Services
+      summary: Informations relatives à un service recherché avec son identifiant
+        RIO
+      operationId: getService
+      description: |-
+        Informations relatives à un service.
+        > Cette fonction permet de rechercher les informations relatives à un service recherché par un de ses identifiants.
+      parameters:
+      - name: idService
+        in: path
+        description: Identifiant RIO du service (conditionnel)
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+      - name: codeService
+        in: query
+        description: Code DIALOGUE du service (conditionnel)
+        schema:
+          maxLength: 20
+          type: string
+      responses:
+        200:
+          description: La recherche des informations relatives à un service s'est
+            déroulée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /evenements:
+    get:
+      tags:
+      - Evenements
+      summary: Liste des événements se rapportant à un agent ou un service en fonction
+        de critères de recherche
+      operationId: getEvenements
+      description: |-
+        Cette fonction permet de rechercher les événements se rapportant à un agent ou un service en fonction de critères de recherche.
+        > Il est FORTEMENT RECOMMANDE que les applications se synchronisant avec le RIO à l’aide de cette 
+        > fonction soient à même de gérer une resynchronisation à partir de fourchettes de dates.
+        > En effet, il existe une limite au nombre d’événements retournés par getEvenements. Après une longue désynchronisation il est quasi certain
+        que cette limite sera atteinte.
+        > Il faudra alors resynchroniser progressivement en récupérant plusieurs courtes périodes, possible uniquement si l’application
+        cliente sait gérer une fourchette de date.
+        > Les critères s’appliquent avec des « ET ».
+        > Si des critères contradictoires ou incohérents sont fournis, la recherche retournera un résultat vide.
+      parameters:
+      - name: idRIO
+        in: query
+        description: |-
+          Identifiant RIO de l’entité modifiée;
+          > si idSource et idRIO sont renseignés, idRIO est prioritaire;
+          > n°RIO de l’agent pour un agent ou n°RIO attribué au service;
+          > evenement.id_entite
+        allowEmptyValue: true
+        schema:
+          maxLength: 10
+          type: integer
+          format: int4
+      - name: idSource
+        in: query
+        description: |-
+          Identifiant dans la source du RIO;
+          > si idSource et idRIO sont renseignés, idRIO est prioritaire.
+          > code source et matricule DIALOGUE pour un agent Etat;
+          > code source et numéro ARPEGE pour un agent Ville de Paris;
+          le code DIALOGUE pour un service
+        allowEmptyValue: true
+        schema:
+          maxLength: 11
+          type: string
+      - name: causeEvt
+        in: query
+        description: Cause de l’événement
+        allowEmptyValue: true
+        schema:
+          maxLength: 10
+          type: integer
+          format: int4
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10
+          - 11
+      - name: typeEntite
+        in: query
+        description: |-
+          Type de l’entité.
+          > Le TypeEntite est obligatoirement renseigné.
+          > L’un des autres éléments au moins doit être renseigné.
+        required: true
+        allowEmptyValue: true
+        schema:
+          maxLength: 11
+          type: integer
+          format: int4
+          enum:
+          - 1
+          - 2
+      - name: typeAction
+        in: query
+        description: Type de l’action effectuée ayant entrainé l’événement
+        allowEmptyValue: true
+        schema:
+          maxLength: 10
+          type: string
+          enum:
+          - C
+          - M
+          - S
+      - name: dateDebut
+        in: query
+        description: |-
+          Valeur inférieure de la fourchette de dates de survenance de l’événement.
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: dateFin
+        in: query
+        description: Valeur supérieure de la fourchette de dates de survenance de
+          l’événement.
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      responses:
+        200:
+          description: La recherche des informations relatives à un service s'est
+            déroulée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvenementsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /certificats/{uid}/certificats:
+    put:
+      tags:
+      - Certificats
+      summary: Mise à jour d'un und plusieurs certificat/s de  (Conforme à la définition
+        WSDL du WS Soap en prod)
+      operationId: putCertificat
+      description: |-
+        Cette fonction permet de mettre à jour un ou des certificats de chiffrement.
+        > Rappel: il ne peut y avoir qu’un seul certificat d’un type donné
+        > (authentification, signature, confidentialité) pour un agent.
+        > Tout appel à cette fonction remplace un éventuel certificat de même type existant pour
+        un agent.
+        > Si un certificat existe dans le RIO et que la requête n’envoie pas de certificat de remplacement pour celui-ci
+        >, alors le certificat existant est conservé.
+        > L’un au moins des certificats doit être fourni.
+        > La date de début et la date de fin de validité doivent obligatoirement accompagner d'un certificat.
+        > Les balises des certificats non fournis doivent être absentes (ie une balise vide n’est pas acceptée);
+        > auparavant putCertificat
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO de l’agent; n°RIO de l’agent pour un agent ou
+          n°RIO attribué au service; certificat_pub.id_rio_agt_pub
+        required: true
+        schema:
+          maxLength: 10
+          type: integer
+          format: int4
+      - name: userCertificate
+        in: query
+        description: Certificat de chiffrement
+        schema:
+          type: string
+          format: binaire_long
+      - name: userCertificateDateDebut
+        in: query
+        description: Date de début de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userCertificateDateFin
+        in: query
+        description: Date de fin de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userPKCS12
+        in: query
+        description: Certificat d'authentification
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: binaire_long
+      - name: userPKCS12DateDebut
+        in: query
+        description: Date de début de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userPKCS12DateFin
+        in: query
+        description: Date de fin de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userSMIMECertificate
+        in: query
+        description: Certificat de signature
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: binaire_long
+      - name: userSMIMEDateDebut
+        in: query
+        description: Date de début de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userSMIMEDateFin
+        in: query
+        description: Date de fin de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      responses:
+        200:
+          description: La recherche des informations relatives à un service s'est
+            déroulée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CertificatsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /certificats/{uid}/userCertificate:
+    put:
+      tags:
+      - Certificats
+      summary: Mise à jour d'un certificat utilisateur
+      operationId: putCertificat
+      description: |-
+        Cette fonction permet de mettre à jour un certificat de chiffrement,le certificat d'utilisateur.
+        > Rappel: il ne peut y avoir qu’un seul certificat d’un type donné (authentification, signature, confidentialité) pour un agent.
+        > Tout appel à cette fonction remplace un éventuel certificat de même type existant pour un agent.
+        >(Evolution proposé avec MAJ d un seul certificat spécifique)
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO de l’agent
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+          enum:
+          - n°RIO de l’agent pour un agent
+          - n°RIO attribué au service
+      - name: userCertificate
+        in: query
+        description: Certificat de chiffrement
+        required: true
+        schema:
+          type: string
+          format: binaire_long
+      - name: userCertificateDateDebut
+        in: query
+        description: Date de début de validité du certificat
+        required: true
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userCertificateDateFin
+        in: query
+        description: Date de fin de validité du certificat
+        required: true
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      responses:
+        200:
+          description: La recherche des informations relatives à un service s'est
+            déroulée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CertificatsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /certificats/{uid}/userPKCS12:
+    put:
+      tags:
+      - Certificats
+      summary: Mise à jour d un certificat d authentification
+      operationId: putCertificat
+      description: |-
+        Cette fonction permet de mettre à jour un certificat de chiffrement,le certificat d'authentification.
+        > Rappel: il ne peut y avoir qu’un seul certificat d’un type donné (authentification, signature, confidentialité) pour un agent.
+        Tout appel à cette fonction remplace un éventuel certificat de même type existant
+        pour un agent. (Evolution proposé avec MAJ d un seul certificat spécifique)
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO de l’agent
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+          enum:
+          - n°RIO de l’agent pour un agent
+          - n°RIO attribué au service
+      - name: userPKCS12
+        in: query
+        description: Certificat d'authentification
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: binaire_long
+      - name: userPKCS12DateDebut
+        in: query
+        description: Date de début de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userPKCS12DateFin
+        in: query
+        description: Date de fin de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      responses:
+        200:
+          description: La recherche des informations relatives à un service s'est
+            déroulée avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CertificatsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /certificats/{uid}/userSMIME:
+    put:
+      tags:
+      - Certificats
+      summary: Mise à jour d'un certificat de signature
+      operationId: putCertificat
+      description: |-
+        Cette fonction permet de mettre à jour un certificat de chiffrement,le certificat de signature.
+        > Rappel: il ne peut y avoir qu’un seul certificat d’un type donné (authentification, signature, confidentialité) pour un agent.
+        Tout appel à cette fonction remplace un éventuel certificat de même type existant pour un agent.
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO de l’agent
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+          enum:
+          - n°RIO de l’agent pour un agent
+          - n°RIO attribué au service
+      - name: userSMIMECertificate
+        in: query
+        description: Certificat de signature
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: binaire_long
+      - name: userSMIMEDateDebut
+        in: query
+        description: Date de début de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      - name: userSMIMEDateFin
+        in: query
+        description: Date de fin de validité du certificat
+        allowEmptyValue: true
+        schema:
+          type: string
+          format: date_format
+      responses:
+        200:
+          description: La mise à jour d un ou des certificats de signature s'est déroulée
+            avec succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CertificatsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+  /certificats/{uid}:
+    put:
+      tags:
+      - Certificats
+      summary: Mise à jour d'un certificat d'un agent d'un type donné
+      operationId: putCertificat
+      description: |-
+        Cette fonction permet de mettre à jour un certificat d'un type définit par son id.
+        Tout appel à cette fonction remplace un éventuel certificat de même type existant pour un agent.
+      parameters:
+      - name: uid
+        in: path
+        description: Identifiant RIO de l’agent
+        required: true
+        schema:
+          maxLength: 10
+          type: string
+          enum:
+          - n°RIO de l’agent pour un agent
+          - n°RIO attribué au service
+      - name: idTypeCertificat
+        in: query
+        description: Identifiant technique du type de ce certificat.
+        allowEmptyValue: false
+        schema:
+          type: number
+          format: int4
+      responses:
+        200:
+          description: La mise à jour du certificat de signature s'est déroulée avec
+            succès.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CertificatsResponse'
+        500:
+          description: Erreur SQL
+          content: {}
+components:
+  schemas:
+    CertificatsResponse:
+      type: object
+      properties:
+        errorCode:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        errorText:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        result:
+          maxLength: 3
+          type: string
+          description: OK en absence d'erreur; NOK si une erreur s’est produite. Dans
+            ce cas, la réponse contient la raison de l’erreur (voir §3).
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+      description: CertificatsOutBO
+    EvenementsResponse:
+      type: object
+      properties:
+        errorCode:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        errorText:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        result:
+          maxLength: 3
+          type: string
+          description: |-
+            OK en absence d'erreur
+            > NOK si une erreur s’est produite.
+            Dans ce cas, la réponse contient la raison de l’erreur (voir §3).
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        listeEvenements:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvenementBeanBO'
+      description: EvenementOutBO
+    EvenementBeanBO:
+      type: object
+      properties:
+        causeEvt:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Cause de l’événement; les valeurs possibles sont 1 pour l affectation
+            de l’agent, 2 pour l indicateur de présence de l’agent, 3 pour l adresse
+            mail de l’agent, 4 pour le grade de l’agent, 5 pour le nom de naissance
+            de l’agent, 6 pour le nom d’usage de l’agent, 7 pour l identifiant agent
+            (permet de repérer une création ou une suppression), 8 pour l'identifiant
+            service (permet de repérer une création ou une suppression), 9 pour le
+            nom usage et/ou premier prénom, 10 pour le ael et 11 pour le adr.
+        dateEvt:
+          type: string
+          description: Date de l’événement
+          format: date_format
+        idRIO:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Identifiant RIO de l’entité modifiée; pour un agent le n°RIO
+            de l’agent; pour un service le n°RIO attribué au service; si idSource
+            et idRIO sont renseignés, idRIO est prioritaire.
+        idSource:
+          maxLength: 20
+          minLength: 0
+          type: string
+          description: Identifiant dans la source du RIO; pour un agent Etat le matricule
+            DIALOGUE, préfixé du code source DIALOGUE; pour un agent Ville de Paris
+            le n° ARPEGE, préfixé du code source ARPEGE; pour un service le code DIALOGUE;
+            si idSource et idRIO sont renseignés, idRIO est prioritaire.
+          format: date_format
+        typeAction:
+          maxLength: 1
+          minLength: 0
+          type: string
+          description: Type de l’action effectuée. Les valeurs possibles pour le type
+            d’action ayant entrainé l’événement sont C pour création, M pour modification
+            et S pour suppression.
+        typeEntite:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Type de l’entité. Les valeurs possibles sont 1 pour personne
+            et 2 pour unites; TypeEntite est obligatoirement renseigné. L’un des autres
+            éléments au moins doit être renseigné.
+        valeur:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Nouvelle valeur de la donnée après l’événement, quand elle
+            est connue au moment de la génération de l’événement. Pour un booleen,
+            la valeur sera 0 ou 1. Pour le Common Name, cette valeur est renseignée
+            par le n°RIO.
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+      description: EvenementBeanBO
+    IdentiteResponse:
+      type: object
+      properties:
+        Identite:
+          $ref: '#/components/schemas/IdentiteBeanBO'
+      description: IdentiteOutBO
+    ServiceResponse:
+      type: object
+      properties:
+        errorCode:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        errorText:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Code de l’erreur (voir §3).
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        result:
+          maxLength: 3
+          type: string
+          description: OK en absence d'erreur; NOK si une erreur s’est produite. Dans
+            ce cas, la réponse contient la raison de l’erreur (voir §3).
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        Service:
+          $ref: '#/components/schemas/ServiceBeanBO'
+      description: |-
+        ServiceOutBO.
+        > La réponse ne contient pas de balise <service> si aucun service n’a été trouvé.
+        > Le service n’est retourné que si sa confidentialité est compatible avec celle de l’application cliente (voir §4.2).
+        > Ainsi, un service de confidentialité 3 ne sera pas visible d’une application de confidentialité 1 ou 2.
+    IdentiteBeanBO:
+      type: object
+      properties:
+        accountStatus:
+          minLength: 0
+          type: string
+          description: |-
+            Statut du compte d’un utilisateur.
+            > Balise toujours vide car non renseignée dans cette version.
+          format: date_format
+        adr:
+          type: integer
+          description: |-
+            Id de l’ADR de l’agent si celui-ci est renseigné.
+            > Sinon Id de l’ADR du service auquel est affecté l’agent
+            > (service lié à l’agent via la table AFFECT_REELLE_PUB)
+          format: int8
+        ael:
+          type: integer
+          description: |-
+            Id de l’AEL de l’agent si celui-ci est renseigné.
+            > Sinon Id de l’AEL du service auquel est affecté l’agent 
+            > (service lié à l’agent via la table AFFECT_REELLE_PUB)
+          format: int8
+        certificats:
+          $ref: '#/components/schemas/CertificatsBeanBO'
+        cn:
+          maxLength: 80
+          minLength: 0
+          type: string
+          description: Nom complet de la personne; nom_complet_agt
+          format: text
+        corps:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Appellation complète du corps associé au grade de la personne
+        dateDepart:
+          minLength: 0
+          type: string
+          description: Date de départ prévisionnelle
+          format: date_format
+        dateNaissance:
+          type: string
+          description: Date de naissance; date_naissance_agt
+          format: date_format
+        employeeNumber:
+          maxLength: 11
+          minLength: 0
+          type: string
+          description: |-
+            Identifiant unique relatif à la source RH (comprend la source RH et l’identifiant RH).
+            > Source = A pour ARPEGE, D pour DIALOGUE, R pour RIO.
+        employeeType:
+          minLength: 0
+          type: string
+          description: |-
+            Statut de la personne au sein de l’entreprise. Balise toujours vide car non renseignée dans cette version.
+        filiere:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: |-
+            Libellé long de la filière (permet de repérer les personnels actifs de la police)
+          format: referentiel_libelle_long
+        idCorps:
+          type: integer
+          description: Identifiant RIO du corps; id_corps
+        idFiliere:
+          type: integer
+          description: Identifiant de la filière; id_filiere dans filiere
+          format: serial
+        idGrade:
+          type: integer
+          description: Identifiant RIO du grade; id_grade dans agent_pub
+        images:
+          $ref: '#/components/schemas/ImagesBeanBO'
+        kbr:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: |-
+            Identifiant Kerberos pour smartcard logon; id_kbr_agt
+          format: adresse_messagerie
+        libCorpsCarteLigne1:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: |-
+            Libellé corps imprimable sur la carte (1ère ligne)
+          format: referentiel_libelle_carte
+        libCorpsCarteLigne2:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: |-
+            Libellé corps imprimable sur la carte (2ème ligne)
+          format: adresse_messagerie
+        libGradeCarteLigne1:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: Libellé grade imprimable sur la carte (1ère ligne)
+          format: adresse_messagerie
+        libGradeCarteLigne2:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: Libellé grade imprimable sur la carte (2ème ligne)
+          format: adresse_messagerie
+        mail:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Adresse de messagerie professionnelle
+        numeroRH:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: |-
+            Identifiant RH. Ne numéro n’est pas globalement unique,
+            > des recouvrements entre plusieurs sources sont possibles.
+        personConf:
+          type: integer
+          description: Niveau de confidentialité de la personne
+          format: int4
+        personalTitle:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: |-
+            Libellé long  d une qualité de personne référencée
+            > Melle pour Mademoiselle, Mr, Mme…)
+          format: referentiel_libelle_long
+        premierPrenom:
+          maxLength: 25
+          type: string
+          description: Premier prénom; premier_prenom_agt
+          format: identite_prenom
+        rank:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Appellation complète du grade de la personne
+          format: referentiel_libelle_long
+        secondaryAccounts:
+          type: object
+          properties: {}
+          description: |-
+            Coffre-fort comportant les accréditations secondaires de l’agent.
+            > Balise toujours vide car non renseignée dans cette version.
+        shortCorps:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: Appellation abrégée du corps associé au grade de la personne
+          format: referentiel_libelle_court
+        shortRank:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: Appellation abrégée du grade de la personne
+          format: referentiel_libelle_court
+        sn:
+          maxLength: 40
+          minLength: 0
+          type: string
+          description: Nom d’usage
+          format: identite_nom
+        snNaissance:
+          maxLength: 40
+          minLength: 0
+          type: string
+          description: Nom de famille de naissance
+          format: identite_nom
+        status:
+          type: boolean
+          description: |-
+            Indicateur de présence d’un agent
+            > En fonction (OUI/NON)
+        statut:
+          maxLength: 2
+          minLength: 0
+          type: string
+          description: |-
+            Statut (ET = ETAT, VI = VILLE, EX = EXTERNE, RO = Réserviste Operationnel)
+          format: statut_code
+        uid:
+          type: integer
+          description: |-
+            Identifiant technique RIO de la personne correspondant à cet agent (conditionnel);
+          format: int4
+        upn:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Identifiant AD pour smartcard logon
+    CertificatsBeanBO:
+      type: object
+      properties:
+        userCertificate:
+          type: string
+          description: Certificat de chiffrement
+          format: binaire_long
+        userPKCS12:
+          type: string
+          description: Certificat d’authentification
+          format: binaire_long
+        userSMIMECertificate:
+          type: string
+          description: Certificat de signature
+          format: binaire_long
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+      description: |-
+        Liste des certificats de l’agent.
+        > Balise et sous-balises toujours présentes,
+        > mais valuées uniquement si l’indicateur de la requête a été positionné à VRAI.
+    ImagesBeanBO:
+      type: object
+      properties:
+        dateJpegPhoto:
+          type: string
+          description: Date de mise à jour de la photo
+          format: date_format
+        jpegPhoto:
+          type: string
+          description: Photo de l’agent au format jpeg
+          format: binaire_long
+        jpegPhotoSignature:
+          type: string
+          description: Photo de la signature manuscrite de l’agent au format jpeg.
+            Champ non renseigné dans cette version. Ne pas utilisé dans cette version.
+          format: binaire_long
+      description: |-
+        Photo et signature.
+        > Balise et sous-balises toujours présentes,
+        > mais valuées uniquement si l’indicateur de la requête a été positionné à VRAI.
+      format: tns5:ImagesBeanBO
+    ServiceBeanBO:
+      type: object
+      properties:
+        adr:
+          type: integer
+          description: Id de l’ADR du service
+          format: int8
+        ael:
+          type: integer
+          description: Id de l’AEL du service
+          format: int8
+        codeInsee:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: Code INSEE de la commune
+        codePostal:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: CodePostal
+        codeService:
+          maxLength: 20
+          minLength: 0
+          type: string
+          description: Code DIALOGUE du service
+        dateEffetStatus:
+          minLength: 0
+          type: string
+          description: Date d’effet de l’indicateur actif / inactif
+          format: date_format
+        denominationAdr:
+          maxLength: 38
+          minLength: 0
+          type: string
+          description: Dénomination (1ère ligne adresse)
+        departementNumber:
+          maxLength: 200
+          minLength: 0
+          type: string
+          description: Chemin complet MAIA du service
+        departmentUID:
+          maxLength: 200
+          minLength: 0
+          type: string
+          description: Identifiant MAIA du service
+        description:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Description du service (libellé long)
+        facsimileTelephoneNumber:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: N° de fax
+        idRegroupement:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Identifiant du regroupement métier du service
+        idService:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Identifiant RIO du service
+        localisation:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Ville
+        mail:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Adresse mail du service
+        manager:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Nom du responsable du service
+        ou:
+          maxLength: 30
+          minLength: 0
+          type: string
+          description: Nom du service (libellé court)
+        ouSic:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Identifiant du service SIC de rattachement
+        ouGestion:
+          type: integer
+          description: Libellé de l’entité de gestion administrative;
+        parentId:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Identifiant RIO du service père
+        parentOu:
+          maxLength: 200
+          minLength: 0
+          type: string
+          description: Identifiant MAIA du service père
+        physicalDeliveryOfficeName:
+          maxLength: 38
+          minLength: 0
+          type: string
+          description: Bureau distributeur
+        postOfficeBox:
+          maxLength: 38
+          minLength: 0
+          type: string
+          description: Complément d’adresse
+        regroupement:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Libellé regroupement métier du service
+        secretary:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: Nom du secrétaire du service
+        serviceAdm:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: |-
+            Indicateur de service administratif.
+            > Renvoie « true » ou «false ».
+        serviceConf:
+          maxLength: 10
+          minLength: 0
+          type: string
+          description: Confidentialité du service
+        serviceOpe:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: |-
+            Indicateur de service opérationnel.
+            > Renvoie « true » ou « false».
+        status:
+          maxLength: 5
+          minLength: 0
+          type: string
+          description: |-
+            Indicateur service actif / inactif.
+            > Renvoie « true » ou « false».
+        street:
+          maxLength: 38
+          minLength: 0
+          type: string
+          description: N° et voie
+        telephoneNumber:
+          maxLength: 100
+          minLength: 0
+          type: string
+          description: N° de téléphone
+        isEmpty:
+          type: boolean
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        objMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        _strMode:
+          minLength: 0
+          type: string
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+        version:
+          type: integer
+          description: élément technique qu’une application appelante ne doit pas
+            utiliser
+      description: Informations relatives à un service
+  responses:
+    BadRequest:
+      description: Bad Request
+      content: {}
+    Conflict:
+      description: Conflict
+      content: {}
+    Created:
+      description: Created
+      content: {}
+    Forbidden:
+      description: Forbidden
+      content: {}
+    InternalServerError:
+      description: Internal Server Error
+      content: {}
+    NotFound:
+      description: Not Found
+      content: {}
+    OK:
+      description: Success
+      content: {}
+    PreconditionFailed:
+      description: Precondition Failed
+      content: {}
+    Unauthorized:
+      description: Unauthorized
+      content: {}
+    UnsupportedMediaType:
+      description: The Media Type of the request is not supported, it has to be application/json
+      content: {}
